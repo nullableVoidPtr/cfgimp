@@ -110,7 +110,6 @@ class StubLoader(importlib.abc.Loader):
         pass
 
     def is_package(self, fullname):
-        breakpoint()
         if fullname == self.fullname:
             return True
 
@@ -146,7 +145,6 @@ class CfgImpPathFinder(importlib.abc.PathEntryFinder):
                     # import package.filename
                     found_loaders.append((self.loaders[suffix], (fullname, f)))
 
-        breakpoint()
         if len(found_loaders) == 0:
             return None
         elif len(found_loaders) > 1:
@@ -162,34 +160,6 @@ class CfgImpPathFinder(importlib.abc.PathEntryFinder):
             *loader_details[1],
             loader=loader_details[0](*loader_details[1]),
         )
-
-
-class CfgImpMetaFinder(importlib.abc.MetaPathFinder):
-    def __init__(self, target_package, loaders=_DEFAULT_CFGIMP_LOADERS):
-        self.target_package = target_package
-        self.loaders = loaders
-
-    def find_spec(self, fullname, path, target=None):
-        if "." not in fullname:
-            return None
-        parent, name = fullname.rsplit(".", 1)
-        if not parent.startswith(self.target_package):
-            return None
-
-        print(fullname, path)
-        for p in path:
-            for f in Path(p).iterdir():
-                if f.is_file():
-                    stem, suffix = f.name.split(".", 1)
-                    if stem == name and suffix in self.loaders:
-                        # import package.filename
-                        return importlib.util.spec_from_file_location(
-                            fullname,
-                            f,
-                            loader=self.loaders[suffix],
-                        )
-
-        return None
 
 
 class CfgImp:
