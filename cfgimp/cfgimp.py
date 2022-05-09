@@ -3,6 +3,7 @@ import importlib.util
 import importlib.machinery
 from pathlib import Path
 from types import ModuleType
+import collections.abc
 import sys
 import json
 import csv
@@ -17,34 +18,58 @@ class BaseModule(ModuleType):
         self.__file__ = spec.origin
 
 
-class CfgImpTableModule(dict):
+class TableModule(BaseModule, collections.abc.MutableMapping):
     def __init__(self, spec: importlib.machinery.ModuleSpec):
-        super().__init__()
-        self.__name__ = spec.name
-        self.__package__ = spec.parent
-        self.__file__ = spec.origin
-        self.__loader__ = spec.loader
+        super().__init__(spec)
+        self.table = {}
+
+    def __getitem__(self, key):
+        return self.table[key]
+
+    def __setitem__(self, key, value):
+        self.table[key] = value
+
+    def __delitem__(self, key):
+        del self.table[key]
+
+    def __iter__(self):
+        return self.table.__iter__()
+
+    def __len__(self):
+        return len(self.table)
 
     def __str__(self):
-        return super().__repr__()
+        return str(self.table)
 
     def __repr__(self):
-        return f"<module '{self.__name__}' from '{self.__file__}'>"
+        return f"<table module '{self.__name__}' from '{self.__file__}'>"
 
 
-class CfgImpArrayModule(list):
+class ArrayModule(BaseModule, collections.abc.MutableSequence):
     def __init__(self, spec: importlib.machinery.ModuleSpec):
-        super().__init__(self)
-        self.__name__ = spec.name
-        self.__package__ = spec.parent
-        self.__file__ = spec.origin
-        self.__loader__ = spec.loader
+        super().__init__(spec)
+        self.array = []
+
+    def __getitem__(self, key):
+        return self.array[key]
+
+    def __setitem__(self, key, value):
+        self.array[key] = value
+
+    def __delitem__(self, key):
+        del self.array[key]
+
+    def __len__(self):
+        return len(self.array)
+
+    def insert(self, index, value):
+        self.array.insert(index, value)
 
     def __str__(self):
-        return super().__repr__()
+        return str(self.array)
 
     def __repr__(self):
-        return f"<module '{self.__name__}' from '{self.__file__}'>"
+        return f"<array module '{self.__name__}' from '{self.__file__}'>"
 
 
 class CfgImpLoader(importlib.abc.Loader):
@@ -68,7 +93,7 @@ class JsonLoader(CfgImpLoader):
         super().__init__(fullname, path)
 
     def create_module(self, spec: importlib.machinery.ModuleSpec):
-        return CfgImpTableModule(spec)
+        return TableModule(spec)
 
     def exec_module(self, module):
         with open(module.__file__, "r") as f:
@@ -82,7 +107,7 @@ class CsvLoader(CfgImpLoader):
         super().__init__(fullname, path)
 
     def create_module(self, spec: importlib.machinery.ModuleSpec):
-        return CfgImpArrayModule(spec)
+        return ArrayModule(spec)
 
     def exec_module(self, module):
         with open(module.__file__, "r") as f:
@@ -97,7 +122,6 @@ _DEFAULT_CFGIMP_LOADERS = {
 
 class UnresolvedModule(BaseModule):
     def __init__(self, spec: importlib.machinery.ModuleSpec, files):
-        breakpoint()
         super().__init__(spec)
         self.__path__ = [spec.origin]
         delattr(self, '__file__')
