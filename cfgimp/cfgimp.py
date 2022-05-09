@@ -16,6 +16,15 @@ class BaseModule(ModuleType):
         self.__package__ = spec.parent
         self.__spec__ = spec
         self.__file__ = spec.origin
+        self.__path__ = spec.submodule_search_locations
+
+    def install_suffix(self):
+        if hasattr(self.__loader__, "extension"):
+            ext = self.__loader__.extension
+            if not self.__name__.endswith("." + ext):
+                self.__name__ += "." + ext
+                sys.modules[self.__name__] = self
+                setattr(self, ext, self)
 
 
 class TableModule(BaseModule, collections.abc.MutableMapping):
@@ -83,14 +92,12 @@ class CfgImpLoader(importlib.abc.Loader):
 
         if hasattr(self, "extension") and fullname.endswith("." + self.extension):
             return False
+
         return True
 
 
 class JsonLoader(CfgImpLoader):
     extension = "json"
-
-    def __init__(self, fullname, path):
-        super().__init__(fullname, path)
 
     def create_module(self, spec: importlib.machinery.ModuleSpec):
         return TableModule(spec)
@@ -98,13 +105,11 @@ class JsonLoader(CfgImpLoader):
     def exec_module(self, module):
         with open(module.__file__, "r") as f:
             module.update(json.load(f))
+        module.install_suffix()
 
 
 class CsvLoader(CfgImpLoader):
     extension = "csv"
-
-    def __init__(self, fullname, path):
-        super().__init__(fullname, path)
 
     def create_module(self, spec: importlib.machinery.ModuleSpec):
         return ArrayModule(spec)
@@ -113,6 +118,7 @@ class CsvLoader(CfgImpLoader):
         with open(module.__file__, "r") as f:
             module.clear()
             module.extend(csv.reader(f))
+        module.install_suffix()
 
 
 _DEFAULT_CFGIMP_LOADERS = {
@@ -121,32 +127,26 @@ _DEFAULT_CFGIMP_LOADERS = {
 
 
 class UnresolvedModule(BaseModule):
-    def __init__(self, spec: importlib.machinery.ModuleSpec, files):
+    def __init__(self, spec: importlib.machinery.ModuleSpec):
         super().__init__(spec)
-        self.__path__ = [spec.origin]
-        delattr(self, '__file__')
-        self.files = files
 
     def __repr__(self):
-        return f"<unresolved module '{self.__name__}' (either {' or '.join(map(str, self.files))})>"
+        return (
+            f"<unresolved module '{self.__name__}' (either '"
+            + "' or '".join(self.__path__)
+            + "')>"
+        )
 
 
 class StubLoader(importlib.abc.Loader):
-    def __init__(self, fullname, files):
+    def __init__(self, fullname):
         self.fullname = fullname
-        self.files = files
 
     def create_module(self, spec: importlib.machinery.ModuleSpec):
-        return UnresolvedModule(spec, self.files)
+        return UnresolvedModule(spec)
 
     def exec_module(self, module):
         pass
-
-    def is_package(self, fullname):
-        if fullname == self.fullname:
-            return True
-
-        return False
 
 
 class CfgImpPathFinder(importlib.abc.PathEntryFinder):
@@ -157,42 +157,63 @@ class CfgImpPathFinder(importlib.abc.PathEntryFinder):
 
     def find_spec(self, fullname, target=None):
         parent = fullname
+        name = None
         if "." in parent:
             parent, name = parent.rsplit(".", 1)
         if not parent.startswith(self.target_package):
             return None
 
-        found_loaders = []
-        for f in self.path_entry.iterdir():
+        resolved_specs = []
+        for f in (
+            self.path_entry.iterdir() if self.path_entry.is_dir() else [self.path_entry]
+        ):
             if f.is_file():
                 stem, suffix = f.name.split(".", 1)
+                if suffix not in self.loaders:
+                    continue
+
                 if (
                     "." in parent
                     and stem == parent.rsplit(".", 1)[1]
                     and name == suffix
-                    and suffix in self.loaders
                 ):
                     # import package.filename.extension
-                    found_loaders.append((self.loaders[suffix], (fullname, f)))
-                elif stem == name and suffix in self.loaders:
+                    resolved_specs.append(
+                        importlib.util.spec_from_file_location(
+                            fullname,
+                            f,
+                            loader=self.loaders[suffix](fullname, f),
+                        )
+                    )
+                elif stem == name:
                     # import package.filename
-                    found_loaders.append((self.loaders[suffix], (fullname, f)))
+                    resolved_specs.append(
+                        importlib.util.spec_from_file_location(
+                            fullname,
+                            f,
+                            loader=self.loaders[suffix](fullname, f),
+                            submodule_search_locations=[str(f)],
+                        )
+                    )
 
-        if len(found_loaders) == 0:
+        if len(resolved_specs) == 0:
             return None
-        elif len(found_loaders) > 1:
-            return importlib.util.spec_from_loader(
+
+        if len(resolved_specs) > 1:
+            return importlib.util.spec_from_file_location(
                 fullname,
-                StubLoader(fullname, [found[1][1] for found in found_loaders]),
-                origin=str(self.path_entry),
-                is_package=True,
+                self.path_entry,
+                loader=StubLoader(fullname),
+                submodule_search_locations=[
+                    f
+                    for locations in [
+                        spec.submodule_search_locations for spec in resolved_specs
+                    ]
+                    for f in locations
+                ],
             )
 
-        loader_details = found_loaders[0]
-        return importlib.util.spec_from_file_location(
-            *loader_details[1],
-            loader=loader_details[0](*loader_details[1]),
-        )
+        return resolved_specs[0]
 
 
 class CfgImp:
