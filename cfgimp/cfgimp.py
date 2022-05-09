@@ -2,15 +2,24 @@ import importlib.abc
 import importlib.util
 import importlib.machinery
 from pathlib import Path
+from types import ModuleType
 import sys
 import json
 import csv
-import warnings
+
+
+class BaseModule(ModuleType):
+    def __init__(self, spec: importlib.machinery.ModuleSpec):
+        super().__init__(spec.name)
+        self.__loader__ = spec.loader
+        self.__package__ = spec.parent
+        self.__spec__ = spec
+        self.__file__ = spec.origin
 
 
 class CfgImpTableModule(dict):
     def __init__(self, spec: importlib.machinery.ModuleSpec):
-        super().__init__(self)
+        super().__init__()
         self.__name__ = spec.name
         self.__package__ = spec.parent
         self.__file__ = spec.origin
@@ -86,12 +95,12 @@ _DEFAULT_CFGIMP_LOADERS = {
 }
 
 
-class UnresolvedModule:
+class UnresolvedModule(BaseModule):
     def __init__(self, spec: importlib.machinery.ModuleSpec, files):
-        self.__name__ = spec.name
-        self.__package__ = spec.parent
-        self.__loader__ = spec.loader
+        breakpoint()
+        super().__init__(spec)
         self.__path__ = [spec.origin]
+        delattr(self, '__file__')
         self.files = files
 
     def __repr__(self):
@@ -172,4 +181,3 @@ class CfgImp:
     @staticmethod
     def install(finder):
         sys.path_hooks.insert(0, finder)
-        # sys.meta_path.insert(0, CfgImpMetaFinder(finder.target_package))
