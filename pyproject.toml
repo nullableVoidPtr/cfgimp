@@ -1,9 +1,12 @@
-[tool.poetry]
+[project]
 name = "cfgimp"
 version = "0.1.0"
 description = "An intelligent importlib-compatible Python loader which allows for static importing of data"
 license = "MIT"
 
+[tool.mypy]
+files = ["cfgimp"]
+
 [build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
+requires = ["setuptools>=61.0.0"]
+build-backend = "setuptools.build_meta"

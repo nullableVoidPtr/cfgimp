@@ -14,20 +14,20 @@ class ArrayModule(BaseModule, MutableSequence):
     def __getitem__(self, key):
         return self.array[key]
 
-    def __setitem__(self, key, value):
+    def __setitem__(self, key, value: Any):
         self.array[key] = value
 
     def __delitem__(self, key):
         del self.array[key]
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.array)
 
-    def insert(self, index, value):
+    def insert(self, index: int, value: Any):
         self.array.insert(index, value)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return str(self.array)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<array module '{self.__name__}' from '{self.__file__}'>"
