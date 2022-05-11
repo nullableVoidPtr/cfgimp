@@ -10,7 +10,11 @@ class CfgImp:
     target_package: str
     loaders: List[Type[BaseLoader]]
 
-    def __init__(self, target_package: str, loaders: Sequence[Type[BaseLoader] | str] = _DEFAULT_CFGIMP_LOADERS): 
+    def __init__(
+        self,
+        target_package: str,
+        loaders: Sequence[Type[BaseLoader] | str] = _DEFAULT_CFGIMP_LOADERS,
+    ):
         self.target_package = target_package
         self.loaders = []
         for loader in loaders:
@@ -18,7 +22,12 @@ class CfgImp:
                 self.loaders.append(loader)
                 continue
 
-            matches = list(filter(lambda l: loader == getattr(l, "extension", None), _DEFAULT_CFGIMP_LOADERS))
+            matches = list(
+                filter(
+                    lambda l: loader == getattr(l, "extension", None),
+                    _DEFAULT_CFGIMP_LOADERS,
+                )
+            )
             if len(matches) == 0:
                 raise ValueError("An extension was specified but no loader was found.")
 

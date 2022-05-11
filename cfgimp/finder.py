@@ -13,8 +13,12 @@ class CfgImpPathFinder(PathEntryFinder):
     target_package: str
     loaders: Dict[str, Type[BaseLoader]]
 
-
-    def __init__(self, path_entry: Path | str, target_package: str, loaders: List[Type[BaseLoader]]=_DEFAULT_CFGIMP_LOADERS):
+    def __init__(
+        self,
+        path_entry: Path | str,
+        target_package: str,
+        loaders: List[Type[BaseLoader]] = _DEFAULT_CFGIMP_LOADERS,
+    ):
         self.path_entry = Path(path_entry).resolve()
         self.target_package = target_package
         self.loaders = {
@@ -23,7 +27,9 @@ class CfgImpPathFinder(PathEntryFinder):
             if loader.extension is not None
         }
 
-    def find_spec(self, fullname: str, target: Optional[ModuleType] = None) -> Optional[ModuleSpec]:
+    def find_spec(
+        self, fullname: str, target: Optional[ModuleType] = None
+    ) -> Optional[ModuleSpec]:
         parent = fullname
         name = None
         if "." in parent:
@@ -46,20 +52,20 @@ class CfgImpPathFinder(PathEntryFinder):
                     and name == suffix
                 ):
                     # import package.filename.extension
-                    if (spec := importlib.util.spec_from_file_location(
-                            fullname,
-                            f,
-                            loader=self.loaders[suffix](fullname, f),
-                    )):
+                    if spec := importlib.util.spec_from_file_location(
+                        fullname,
+                        f,
+                        loader=self.loaders[suffix](fullname, f),
+                    ):
                         resolved_specs.append(spec)
                 elif stem == name:
                     # import package.filename
-                    if (spec := importlib.util.spec_from_file_location(
-                            fullname,
-                            f,
-                            loader=self.loaders[suffix](fullname, f),
-                            submodule_search_locations=[str(f)],
-                    )):
+                    if spec := importlib.util.spec_from_file_location(
+                        fullname,
+                        f,
+                        loader=self.loaders[suffix](fullname, f),
+                        submodule_search_locations=[str(f)],
+                    ):
                         resolved_specs.append(spec)
 
         if len(resolved_specs) == 0:
@@ -73,7 +79,8 @@ class CfgImpPathFinder(PathEntryFinder):
                 submodule_search_locations=[
                     f
                     for locations in [
-                        getattr(spec, "submodule_search_locations", []) for spec in resolved_specs
+                        getattr(spec, "submodule_search_locations", [])
+                        for spec in resolved_specs
                     ]
                     for f in locations
                 ],
