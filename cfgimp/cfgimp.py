@@ -24,7 +24,7 @@ class CfgImp:
             self.loaders.append(matches[0])
 
     def __call__(self, path_entry: str) -> PathEntryFinder:
-        return CfgImpPathFinder(path_entry, self.target_package)
+        return CfgImpPathFinder(path_entry, self.target_package, self.loaders)
 
     def install(self):
         sys.path_hooks.insert(0, self)
