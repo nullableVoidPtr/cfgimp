@@ -1,10 +1,11 @@
-from importlib.abc import PathEntryFinder
-from cfgimp.loaders import _DEFAULT_CFGIMP_LOADERS, BaseLoader, StubLoader
-from pathlib import Path
 import importlib.util
+from importlib.abc import PathEntryFinder
 from importlib.machinery import ModuleSpec
-from typing import Dict, List, Type, Optional
+from pathlib import Path
 from types import ModuleType
+from typing import Dict, List, Optional, Type
+
+from cfgimp.loaders import _DEFAULT_CFGIMP_LOADERS, BaseLoader, StubLoader
 
 
 class CfgImpPathFinder(PathEntryFinder):

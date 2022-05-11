@@ -1,7 +1,10 @@
-from .base import BaseLoader
 from importlib.machinery import ModuleSpec
-from cfgimp.modules import TableModule
+
 import toml
+
+from cfgimp.modules import TableModule
+
+from .base import BaseLoader
 
 
 class TomlLoader(BaseLoader):

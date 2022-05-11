@@ -1,8 +1,9 @@
-from typing import Sequence, List, Type
-from importlib.abc import PathEntryFinder
-from cfgimp.loaders import BaseLoader, _DEFAULT_CFGIMP_LOADERS
-from cfgimp.finder import CfgImpPathFinder
 import sys
+from importlib.abc import PathEntryFinder
+from typing import List, Sequence, Type
+
+from cfgimp.finder import CfgImpPathFinder
+from cfgimp.loaders import _DEFAULT_CFGIMP_LOADERS, BaseLoader
 
 
 class CfgImp:

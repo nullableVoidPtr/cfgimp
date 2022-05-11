@@ -1,6 +1,6 @@
 from importlib.abc import Loader
-from typing import Optional, ClassVar
 from pathlib import Path
+from typing import ClassVar, Optional
 
 
 class BaseLoader(Loader):

@@ -1,8 +1,7 @@
 from .base import BaseLoader
-from .json import JsonLoader
 from .csv import CsvLoader
+from .json import JsonLoader
 from .stub import StubLoader
-
 
 __all__ = ['BaseLoader', 'JsonLoader', 'CsvLoader', 'StubLoader']
 

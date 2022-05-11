@@ -1,7 +1,8 @@
-from .base import BaseModule
 from collections.abc import MutableMapping
 from importlib.machinery import ModuleSpec
-from typing import Iterator, Dict, Any
+from typing import Any, Dict, Iterator
+
+from .base import BaseModule
 
 
 class TableModule(BaseModule, MutableMapping):

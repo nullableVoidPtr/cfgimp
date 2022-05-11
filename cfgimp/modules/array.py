@@ -1,7 +1,8 @@
-from .base import BaseModule
 from collections.abc import MutableSequence
 from importlib.machinery import ModuleSpec
-from typing import List, Any
+from typing import Any, List
+
+from .base import BaseModule
 
 
 class ArrayModule(BaseModule, MutableSequence):

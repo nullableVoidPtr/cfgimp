@@ -1,5 +1,6 @@
-from .base import BaseModule
 from importlib.machinery import ModuleSpec
+
+from .base import BaseModule
 
 
 class UnresolvedModule(BaseModule):

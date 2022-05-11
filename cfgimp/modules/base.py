@@ -1,6 +1,6 @@
-from types import ModuleType
-from importlib.machinery import ModuleSpec
 import sys
+from importlib.machinery import ModuleSpec
+from types import ModuleType
 
 
 class BaseModule(ModuleType):

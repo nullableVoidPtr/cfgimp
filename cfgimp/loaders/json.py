@@ -1,7 +1,9 @@
-from .base import BaseLoader
-from importlib.machinery import ModuleSpec
-from cfgimp.modules import TableModule
 import json
+from importlib.machinery import ModuleSpec
+
+from cfgimp.modules import TableModule
+
+from .base import BaseLoader
 
 
 class JsonLoader(BaseLoader):

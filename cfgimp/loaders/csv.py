@@ -1,7 +1,9 @@
-from .base import BaseLoader
-from importlib.machinery import ModuleSpec
-from cfgimp.modules import ArrayModule
 import csv
+from importlib.machinery import ModuleSpec
+
+from cfgimp.modules import ArrayModule
+
+from .base import BaseLoader
 
 
 class CsvLoader(BaseLoader):
