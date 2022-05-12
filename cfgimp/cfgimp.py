@@ -42,6 +42,10 @@ class CfgImp:
         return CfgImpPathFinder(path_entry, self.target_package, self.loaders)
 
     def install(self):
+        # The default meta finder only checks to see if the path entry finder can
+        # __init__ without errors before eagerly caching it for the path.
+        # If the path finder can't find the spec, then it assumes
+        # No finder can find the spec. Our finder has to act as a proxy.
         sys.path_hooks.insert(0, self)
 
     def uninstall(self):

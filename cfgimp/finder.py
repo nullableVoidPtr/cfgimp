@@ -1,11 +1,23 @@
 import importlib.util
 from importlib.abc import PathEntryFinder
-from importlib.machinery import ModuleSpec
+from importlib.machinery import FileFinder, ModuleSpec
 from pathlib import Path
 from types import ModuleType
-from typing import Dict, List, Optional, Type
+from typing import Callable, Dict, List, Optional, Type
 
 from cfgimp.loaders import _DEFAULT_CFGIMP_LOADERS, BaseLoader, StubLoader
+
+
+def proxy_on_fail(func: Callable) -> Callable:
+    def _proxy_on_fail(
+        self: "CfgImpPathFinder", *args, **kwargs
+    ) -> Optional[ModuleSpec]:
+        if (spec := func(self, *args, **kwargs)) is None:
+            spec = self.fallback.find_spec(*args, **kwargs)
+
+        return spec
+
+    return _proxy_on_fail
 
 
 class CfgImpPathFinder(PathEntryFinder):
@@ -19,6 +31,7 @@ class CfgImpPathFinder(PathEntryFinder):
         target_package: str,
         loaders: Optional[List[Type[BaseLoader]]] = None,
     ):
+        self.fallback = FileFinder(str(path_entry))
         self.path_entry = Path(path_entry).resolve()
         self.target_package = target_package
 
@@ -31,6 +44,7 @@ class CfgImpPathFinder(PathEntryFinder):
             if loader.extension is not None
         }
 
+    @proxy_on_fail
     def find_spec(
         self,
         fullname: str,
@@ -40,7 +54,9 @@ class CfgImpPathFinder(PathEntryFinder):
         name = None
         if "." in parent:
             parent, name = parent.rsplit(".", 1)
-        if not parent.startswith(self.target_package):
+        if parent != self.target_package and not parent.startswith(
+            self.target_package + "."
+        ):
             return None
 
         resolved_specs: List[ModuleSpec] = []
@@ -90,4 +106,6 @@ class CfgImpPathFinder(PathEntryFinder):
                 ],
             )
 
-        return resolved_specs[0]
+        spec = resolved_specs[0]
+        spec.submodule_search_locations = None
+        return spec

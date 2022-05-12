@@ -13,3 +13,6 @@ class StubLoader(Loader):
 
     def exec_module(self, module):
         pass
+
+    def is_package(self, fullname):
+        return fullname == self.fullname
