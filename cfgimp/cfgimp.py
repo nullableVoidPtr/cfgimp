@@ -1,6 +1,6 @@
 import sys
 from importlib.abc import PathEntryFinder
-from typing import List, Sequence, Type
+from typing import List, Optional, Sequence, Type
 
 from cfgimp.finder import CfgImpPathFinder
 from cfgimp.loaders import _DEFAULT_CFGIMP_LOADERS, BaseLoader
@@ -13,9 +13,13 @@ class CfgImp:
     def __init__(
         self,
         target_package: str,
-        loaders: Sequence[Type[BaseLoader] | str] = _DEFAULT_CFGIMP_LOADERS,
+        loaders: Optional[Sequence[Type[BaseLoader] | str]] = None,
     ):
         self.target_package = target_package
+
+        if loaders is None:
+            loaders = _DEFAULT_CFGIMP_LOADERS
+
         self.loaders = []
         for loader in loaders:
             if not isinstance(loader, str) and issubclass(loader, BaseLoader):
@@ -24,7 +28,8 @@ class CfgImp:
 
             matches = list(
                 filter(
-                    lambda l: loader == getattr(l, "extension", None),
+                    lambda l: getattr(l, "extension", None)
+                    == loader,  # pylint: disable=cell-var-from-loop
                     _DEFAULT_CFGIMP_LOADERS,
                 )
             )

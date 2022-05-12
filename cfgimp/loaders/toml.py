@@ -14,6 +14,6 @@ class TomlLoader(BaseLoader):
         return TableModule(spec)
 
     def exec_module(self, module):
-        with open(module.__file__, "r") as f:
-            module.update(toml.load(f))
+        with open(module.__file__, "r", encoding="utf-8") as file:
+            module.update(toml.load(file))
         module.install_suffix()

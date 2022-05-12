@@ -2,10 +2,31 @@
 name = "cfgimp"
 version = "0.1.0"
 description = "An intelligent importlib-compatible Python loader which allows for static importing of data"
-license = "MIT"
+license = {text = "MIT"}
+
+[project.optional-dependencies]
+toml = ["toml"]
+dev = [
+	"types-toml"
+]
 
 [tool.mypy]
 files = ["cfgimp"]
+
+[tool.isort]
+profile = "black"
+
+[tool.pylint.format]
+max-line-length = 88
+
+[tool.pylint.'MESSAGES CONTROL']
+disable = [
+	"missing-module-docstring",
+	"missing-class-docstring",
+	"missing-function-docstring",
+	"no-member",
+	"R"
+]
 
 [build-system]
 requires = ["setuptools>=61.0.0"]

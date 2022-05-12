@@ -17,10 +17,14 @@ class CfgImpPathFinder(PathEntryFinder):
         self,
         path_entry: Path | str,
         target_package: str,
-        loaders: List[Type[BaseLoader]] = _DEFAULT_CFGIMP_LOADERS,
+        loaders: Optional[List[Type[BaseLoader]]] = None,
     ):
         self.path_entry = Path(path_entry).resolve()
         self.target_package = target_package
+
+        if loaders is None:
+            loaders = _DEFAULT_CFGIMP_LOADERS
+
         self.loaders = {
             loader.extension: loader
             for loader in loaders
@@ -28,7 +32,9 @@ class CfgImpPathFinder(PathEntryFinder):
         }
 
     def find_spec(
-        self, fullname: str, target: Optional[ModuleType] = None
+        self,
+        fullname: str,
+        target: Optional[ModuleType] = None,  # pylint: disable=unused-argument
     ) -> Optional[ModuleSpec]:
         parent = fullname
         name = None
@@ -38,35 +44,33 @@ class CfgImpPathFinder(PathEntryFinder):
             return None
 
         resolved_specs: List[ModuleSpec] = []
-        for f in (
+        for file_path in (
             self.path_entry.iterdir() if self.path_entry.is_dir() else [self.path_entry]
         ):
-            if f.is_file():
-                stem, suffix = f.name.split(".", 1)
-                if suffix not in self.loaders:
-                    continue
+            if not file_path.is_file():
+                continue
 
-                if (
-                    "." in parent
-                    and stem == parent.rsplit(".", 1)[1]
-                    and name == suffix
+            stem, suffix = file_path.name.split(".", 1)
+            if suffix not in self.loaders:
+                continue
+
+            if "." in parent and stem == parent.rsplit(".", 1)[1] and name == suffix:
+                # import package.filename.extension
+                if spec := importlib.util.spec_from_file_location(
+                    fullname,
+                    file_path,
+                    loader=self.loaders[suffix](fullname, file_path),
                 ):
-                    # import package.filename.extension
-                    if spec := importlib.util.spec_from_file_location(
-                        fullname,
-                        f,
-                        loader=self.loaders[suffix](fullname, f),
-                    ):
-                        resolved_specs.append(spec)
-                elif stem == name:
-                    # import package.filename
-                    if spec := importlib.util.spec_from_file_location(
-                        fullname,
-                        f,
-                        loader=self.loaders[suffix](fullname, f),
-                        submodule_search_locations=[str(f)],
-                    ):
-                        resolved_specs.append(spec)
+                    resolved_specs.append(spec)
+            elif stem == name:
+                # import package.filename
+                if spec := importlib.util.spec_from_file_location(
+                    fullname,
+                    file_path,
+                    loader=self.loaders[suffix](fullname, file_path),
+                    submodule_search_locations=[str(file_path)],
+                ):
+                    resolved_specs.append(spec)
 
         if len(resolved_specs) == 0:
             return None

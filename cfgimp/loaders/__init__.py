@@ -6,7 +6,7 @@ from .stub import StubLoader
 __all__ = ["BaseLoader", "JsonLoader", "CsvLoader", "StubLoader"]
 
 try:
-    from .toml import TomlLoader
+    from .toml import TomlLoader  # noqa
 except ImportError:
     pass
 else:

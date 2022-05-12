@@ -13,7 +13,7 @@ class CsvLoader(BaseLoader):
         return ArrayModule(spec)
 
     def exec_module(self, module):
-        with open(module.__file__, "r") as f:
+        with open(module.__file__, "r", encoding="utf-8") as file:
             module.clear()
-            module.extend(csv.reader(f))
+            module.extend(csv.reader(file))
         module.install_suffix()

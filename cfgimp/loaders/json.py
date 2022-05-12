@@ -13,6 +13,6 @@ class JsonLoader(BaseLoader):
         return TableModule(spec)
 
     def exec_module(self, module):
-        with open(module.__file__, "r") as f:
-            module.update(json.load(f))
+        with open(module.__file__, "r", encoding="utf-8") as file:
+            module.update(json.load(file))
         module.install_suffix()

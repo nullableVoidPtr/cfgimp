@@ -1,11 +1,9 @@
-from importlib.machinery import ModuleSpec
-
 from .base import BaseModule
 
 
 class UnresolvedModule(BaseModule):
-    def __init__(self, spec: ModuleSpec):
-        super().__init__(spec)
+    def install_suffix(self):
+        pass
 
     def __repr__(self):
         return (
